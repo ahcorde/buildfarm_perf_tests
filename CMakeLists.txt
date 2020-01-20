@@ -15,10 +15,35 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rcpputils REQUIRED)
 find_package(rcutils REQUIRED)
+find_package(Boost REQUIRED COMPONENTS program_options)
 
 add_executable(node_spinning src/node_spinning.cpp)
 ament_target_dependencies(node_spinning
   rclcpp
+)
+
+include_directories(include)
+
+add_executable(system_metric_collector
+  src/main_measurements.cpp
+  src/linux_cpu_process_measurement.cpp
+  src/linux_memory_process_measurement.cpp
+  src/linux_cpu_system_measurement.cpp
+  src/linux_memory_system_measurement.cpp
+  src/utilities/utilities.cpp
+)
+ament_target_dependencies(system_metric_collector
+  Boost
+)
+
+target_link_libraries(system_metric_collector
+  -lstdc++fs
+)
+
+install(TARGETS
+  system_metric_collector
+  DESTINATION
+  lib/${PROJECT_NAME}
 )
 
 if(BUILD_TESTING)
