@@ -37,15 +37,21 @@ def _raw_to_csv(csv_data, csv_path):
     appears on the plot.
     """
     dataframe = pd.read_csv(csv_data, skiprows=21, sep='[ \t]*,[ \t]*', engine='python')
-    dataframe_agg = dataframe.agg(['max', 'mean', 'sum'])
+    dataframe_agg = dataframe.agg(['max', 'mean', 'sum', 'median'])
 
+    percentils_latency = dataframe['latency_mean (ms)'].describe(percentiles=[0.95])
+    percentils_cpu_usage = dataframe['cpu_usage (%)'].describe(percentiles=[0.95])
     values = [
         str(dataframe_agg.loc['mean', 'latency_mean (ms)']),
+        str(dataframe_agg.loc['median', 'latency_mean (ms)']),
+        str(percentils_latency.iloc[5]),
         str(dataframe_agg.loc['max', 'ru_maxrss']),
         str(dataframe_agg.loc['mean', 'received']),
         str(dataframe_agg.loc['mean', 'sent']),
         str(dataframe_agg.loc['sum', 'lost']),
         str(dataframe_agg.loc['mean', 'cpu_usage (%)']),
+        str(percentils_cpu_usage.iloc[5]),
+        str(dataframe_agg.loc['median', 'cpu_usage (%)']),
         ]
 
     with open(csv_path, 'w') as csv:
@@ -65,21 +71,16 @@ def _raw_to_png(csv_data, png_path):
                'latency_mean (ms)',
                'latency_variance (ms) * 100',
                'maxrss (Mb)']].plot(x='T_experiment', secondary_y=['maxrss (Mb)'])
-
-    plt.title('@TEST_NAME@ Performance Test')
-
+    plt.title('Performance tests latency\n@TEST_NAME@')
     plt.savefig(png_path)
 
     dataframe[['T_experiment', 'cpu_usage (%)']].plot(x='T_experiment')
-
-    plt.title('@TEST_NAME@ CPU usage (%) Test')
-
+    plt.title('Performance tests CPU usage (%)\n@TEST_NAME@')
+    plt.ylim(0, 100)
     plt.savefig(png_path[:-4] + "_cpu_usage.png")
 
     dataframe.plot(kind='bar',y=['received', 'sent', 'lost'])
-
-    plt.title('@TEST_NAME@  Received/Sent packets per second and Lost packets')
-
+    plt.title('Performance tests Received/Sent/Lost packages\n@TEST_NAME@')
     plt.savefig(png_path[:-4] + "_histogram.png")
 
 def generate_test_description(ready_fn):
