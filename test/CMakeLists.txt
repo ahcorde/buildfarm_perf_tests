@@ -107,7 +107,7 @@ function(add_performance_test TEST_NAME COMM RMW_IMPLEMENTATION)
 
   foreach(rmw_impl ${_rmw_implementations})
 
-    set(COMM_PUB ${COMM})
+    set(COMM_PUB ${RMW_IMPLEMENTATION})
     set(COMM_SUB ${rmw_impl})
     set(TEST_NAME_PUB_SUB ${RMW_IMPLEMENTATION}_${rmw_impl}_${COMM})
 
