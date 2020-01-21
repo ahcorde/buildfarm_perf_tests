@@ -84,8 +84,12 @@ def _raw_to_png(csv_data, png_path):
     plt.savefig(png_path[:-4] + "_histogram.png")
 
 def generate_test_description(ready_fn):
-    performance_log_prefix = tempfile.mkstemp(
-        prefix='performance_test_@TEST_NAME@_', text=True)[1]
+    if '@NUMBER_PROCESS@' != '2':
+      performance_log_prefix = tempfile.mkstemp(
+          prefix='performance_test_@TEST_NAME@_', text=True)[1]
+    else:
+      performance_log_prefix = tempfile.mkstemp(
+          prefix='performance_test_two_process_@TEST_NAME@_', text=True)[1]
 
     launch_description_array = []
 
@@ -102,22 +106,22 @@ def generate_test_description(ready_fn):
     if '@COMM@' != 'ROS2':
       args.append('--disable_async.')
       envs['FASTRTPS_DEFAULT_PROFILES_FILE'] = '@FASTRTPS_DEFAULT_PROFILES_FILE@'
+    else:
+      if '@NUMBER_PROCESS@' == '2':
+        args.append('--roundtrip_mode')
+        args.append('Main')
 
-    if '@NUMBER_PROCESS@' == '2':
-      args.append('--roundtrip_mode')
-      args.append('Main')
-
-      node_relay = Node(
-          package='performance_test', node_executable='perf_test', output='log',
-          arguments=[
-              '-c', '@COMM@',
-              '-t', '@PERF_TEST_TOPIC@',
-              '--max_runtime', '@PERF_TEST_MAX_RUNTIME@',
-              "--roundtrip_mode", "Relay",
-          ],
-          additional_env=envs,
-      )
-      launch_description_array.append(node_relay)
+        node_relay = Node(
+            package='performance_test', node_executable='perf_test', output='log',
+            arguments=[
+                '-c', '@COMM@',
+                '-t', '@PERF_TEST_TOPIC@',
+                '--max_runtime', '@PERF_TEST_MAX_RUNTIME@',
+                "--roundtrip_mode", "Relay",
+            ],
+            additional_env=envs,
+        )
+        launch_description_array.append(node_relay)
 
     node_under_test = Node(
         package='performance_test', node_executable='perf_test', output='log',
