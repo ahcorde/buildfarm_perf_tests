@@ -71,36 +71,56 @@ def _raw_to_png(csv_data, png_path):
                'latency_mean (ms)',
                'latency_variance (ms) * 100',
                'maxrss (Mb)']].plot(x='T_experiment', secondary_y=['maxrss (Mb)'])
-    plt.title('Performance tests latency\n@TEST_NAME@')
+    plt.title('Performance tests latency\n@TEST_NAME@\nNumber of process: @NUMBER_PROCESS@')
     plt.savefig(png_path)
 
     dataframe[['T_experiment', 'cpu_usage (%)']].plot(x='T_experiment')
-    plt.title('Performance tests CPU usage (%)\n@TEST_NAME@')
+    plt.title('Performance tests CPU usage (%)\n@TEST_NAME@\nNumber of process: @NUMBER_PROCESS@')
     plt.ylim(0, 100)
     plt.savefig(png_path[:-4] + "_cpu_usage.png")
 
     dataframe.plot(kind='bar',y=['received', 'sent', 'lost'])
-    plt.title('Performance tests Received/Sent/Lost packages\n@TEST_NAME@')
+    plt.title('Performance tests Received/Sent/Lost packages\n@TEST_NAME@\nNumber of process: @NUMBER_PROCESS@')
     plt.savefig(png_path[:-4] + "_histogram.png")
 
 def generate_test_description(ready_fn):
     performance_log_prefix = tempfile.mkstemp(
         prefix='performance_test_@TEST_NAME@_', text=True)[1]
+
+    launch_description_array = []
+
+    args=[
+        '-c', '@COMM@',
+        '-t', '@PERF_TEST_TOPIC@',
+        '--max_runtime', '@PERF_TEST_MAX_RUNTIME@',
+        '-l', performance_log_prefix,
+    ]
+
+    if ['@NUMBER_PROCESS@'==2]:
+      args.append('--roundtrip_mode')
+      args.append('Main')
+
+      node_relay = Node(
+          package='performance_test', node_executable='perf_test', output='log',
+          arguments=[
+              '-c', '@COMM@',
+              '-t', '@PERF_TEST_TOPIC@',
+              '--max_runtime', '@PERF_TEST_MAX_RUNTIME@',
+              "--roundtrip_mode", "Relay",
+          ]
+      )
+      launch_description_array.append(node_relay)
+
     node_under_test = Node(
         package='performance_test', node_executable='perf_test', output='log',
-        arguments=[
-            '-c', '@COMM@',
-            '-t', '@PERF_TEST_TOPIC@',
-            '--max_runtime', '@PERF_TEST_MAX_RUNTIME@',
-            '-l', performance_log_prefix,
-        ]
+        arguments=args,
     )
 
-    return LaunchDescription([
-        node_under_test,
-        launch_testing.util.KeepAliveProc(),
-        launch.actions.OpaqueFunction(function=lambda context: ready_fn()),
-    ]), locals()
+    launch_description_array.append(node_under_test)
+    launch_description_array.append(launch_testing.util.KeepAliveProc())
+    launch_description_array.append(launch.actions.OpaqueFunction(function=lambda context: ready_fn()))
+
+    return LaunchDescription(launch_description_array), locals()
 
 
 class PerformanceTestTermination(unittest.TestCase):

@@ -20,6 +20,9 @@ function(add_performance_test TEST_NAME COMM RMW_IMPLEMENTATION)
     "${AMENT_TEST_RESULTS_DIR}/${PROJECT_NAME}/performance_test_results_${TEST_NAME}.csv"
     ABSOLUTE
   )
+
+  set(NUMBER_PROCESS "1")
+
   configure_file(
     test_performance.py.in
     ${CMAKE_CURRENT_BINARY_DIR}/test_performance_${TEST_NAME}.py.configure
@@ -29,7 +32,7 @@ function(add_performance_test TEST_NAME COMM RMW_IMPLEMENTATION)
     OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/test/test_performance_${TEST_NAME}.py"
     INPUT "${CMAKE_CURRENT_BINARY_DIR}/test_performance_${TEST_NAME}.py.configure"
   )
-  
+
   add_launch_test(
     "${CMAKE_CURRENT_BINARY_DIR}/test/test_performance_${TEST_NAME}.py"
     TARGET test_performance_${TEST_NAME}
@@ -49,8 +52,10 @@ function(add_performance_test TEST_NAME COMM RMW_IMPLEMENTATION)
     ABSOLUTE
   )
 
+  set(NUMBER_PROCESS "2")
+
   configure_file(
-    test_performance_two_process.py.in
+    test_performance.py.in
     ${CMAKE_CURRENT_BINARY_DIR}/test_performance_two_process_${TEST_NAME}.py.configure
     @ONLY
   )
@@ -63,8 +68,8 @@ function(add_performance_test TEST_NAME COMM RMW_IMPLEMENTATION)
     "${CMAKE_CURRENT_BINARY_DIR}/test/test_performance_two_process_${TEST_NAME}.py"
     TARGET test_performance_two_process_${TEST_NAME}
     ENV
-    "PERFORMANCE_TWO_PROCESS_REPORT_PNG=${PERFORMANCE_TWO_PROCESS_REPORT_PNG}"
-    "PERFORMANCE_TWO_PROCESS_REPORT_CSV=${PERFORMANCE_TWO_PROCESS_REPORT_CSV}"
+    "PERFORMANCE_REPORT_PNG=${PERFORMANCE_TWO_PROCESS_REPORT_PNG}"
+    "PERFORMANCE_REPORT_CSV=${PERFORMANCE_TWO_PROCESS_REPORT_CSV}"
     "RMW_IMPLEMENTATION=${RMW_IMPLEMENTATION}"
   )
 
