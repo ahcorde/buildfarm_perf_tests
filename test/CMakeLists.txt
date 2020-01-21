@@ -11,6 +11,11 @@ set(COMM_TYPE_rmw_fastrtps_cpp "FastRTPS")
 
 function(add_performance_test TEST_NAME COMM RMW_IMPLEMENTATION)
   get_filename_component(
+    FASTRTPS_DEFAULT_PROFILES_FILE
+    "${CMAKE_CURRENT_SOURCE_DIR}/DEFAULT_FASTRTPS_PROFILES.xml"
+    ABSOLUTE
+  )
+  get_filename_component(
     PERFORMANCE_REPORT_PNG
     "${AMENT_TEST_RESULTS_DIR}/${PROJECT_NAME}/performance_test_results_${TEST_NAME}.png"
     ABSOLUTE

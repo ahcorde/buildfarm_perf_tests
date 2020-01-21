@@ -96,7 +96,14 @@ def generate_test_description(ready_fn):
         '-l', performance_log_prefix,
     ]
 
-    if ['@NUMBER_PROCESS@'==2]:
+    envs = dict()
+    envs['RMW_IMPLEMENTATION'] = '@RMW_IMPLEMENTATION@'
+
+    if '@COMM@' != 'ROS2':
+      args.append('--disable_async.')
+      envs['FASTRTPS_DEFAULT_PROFILES_FILE'] = '@FASTRTPS_DEFAULT_PROFILES_FILE@'
+
+    if '@NUMBER_PROCESS@' == '2':
       args.append('--roundtrip_mode')
       args.append('Main')
 
@@ -107,13 +114,15 @@ def generate_test_description(ready_fn):
               '-t', '@PERF_TEST_TOPIC@',
               '--max_runtime', '@PERF_TEST_MAX_RUNTIME@',
               "--roundtrip_mode", "Relay",
-          ]
+          ],
+          additional_env=envs,
       )
       launch_description_array.append(node_relay)
 
     node_under_test = Node(
         package='performance_test', node_executable='perf_test', output='log',
         arguments=args,
+        additional_env=envs,
     )
 
     launch_description_array.append(node_under_test)
