@@ -17,6 +17,14 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(rcpputils REQUIRED)
+find_package(rcutils REQUIRED)
+
+add_executable(node_spinning src/node_spinning.cpp)
+ament_target_dependencies(node_spinning
+  rclcpp
+)
 
 include_directories(include)
 
@@ -35,6 +43,7 @@ target_link_libraries(system_metric_collector
 
 install(TARGETS
   system_metric_collector
+  node_spinning
   DESTINATION
   lib/${PROJECT_NAME}
 )
