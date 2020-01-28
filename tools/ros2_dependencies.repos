@@ -1,8 +1,8 @@
 repositories:
   buildfarm_perf_tests:
     type: git
-    url: https://github.com/ros2/buildfarm_perf_tests.git
-    version: master
+    url: https://github.com/ahcorde/buildfarm_perf_tests.git
+    version: ahcorde/test/v3
   performance_test:
     type: git
     url: https://github.com/ros2/performance_test.git
