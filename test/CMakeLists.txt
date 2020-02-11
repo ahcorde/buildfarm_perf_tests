@@ -39,6 +39,7 @@ function(add_performance_test TEST_NAME COMM RMW_IMPLEMENTATION)
     "PERFORMANCE_REPORT_CSV=${PERFORMANCE_REPORT_CSV}"
     "RMW_IMPLEMENTATION=${RMW_IMPLEMENTATION}"
   )
+
   set(NUMBER_PROCESS "2")
   # TODO (ahcorde): perf_test is not working with CycloneDDS or FastRTPS when
   # processes are splitted in two
@@ -88,6 +89,7 @@ function(add_performance_test TEST_NAME COMM RMW_IMPLEMENTATION)
     "${AMENT_TEST_RESULTS_DIR}/${PROJECT_NAME}/overhead_node_test_results_${TEST_NAME}.png"
     ABSOLUTE
   )
+
   configure_file(
     test_spinning.py.in
     ${CMAKE_CURRENT_BINARY_DIR}/test_spinning_${TEST_NAME}.py.configure
@@ -97,6 +99,7 @@ function(add_performance_test TEST_NAME COMM RMW_IMPLEMENTATION)
     OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/test/test_spinning_${TEST_NAME}.py"
     INPUT "${CMAKE_CURRENT_BINARY_DIR}/test_spinning_${TEST_NAME}.py.configure"
   )
+
   add_launch_test(
     "${CMAKE_CURRENT_BINARY_DIR}/test/test_spinning_${TEST_NAME}.py"
     TARGET test_spinning_${TEST_NAME}
@@ -106,9 +109,10 @@ function(add_performance_test TEST_NAME COMM RMW_IMPLEMENTATION)
     "RMW_IMPLEMENTATION=${RMW_IMPLEMENTATION}"
     TIMEOUT 120
   )
-
   set(PUBSUB_TIMEOUT "30")
+
   get_available_rmw_implementations(_rmw_implementations)
+
   foreach(rmw_impl ${_rmw_implementations})
 
     # TODO (ahcorde): perf_test is not working with CycloneDDS or FastRTPS when
