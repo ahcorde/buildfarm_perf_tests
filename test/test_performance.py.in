@@ -54,9 +54,9 @@ def _raw_to_csv(csv_data, csv_path):
         str(dataframe_agg.loc['mean', 'cpu_usage (%)']),
         str(percentils_cpu_usage.iloc[5]),
         str(dataframe_agg.loc['median', 'cpu_usage (%)']),
-        str(dataframe_agg.loc['mean', 'data_received']) / 1024,
-        str(dataframe_agg.loc['median', 'data_received']) / 1024,
-        str(percentils_data_received.iloc[5]) / 1024
+        str(dataframe_agg.loc['mean', 'data_received'] / 1024 ) ,
+        str(dataframe_agg.loc['median', 'data_received'] / 1024 ) ,
+        str(percentils_data_received.iloc[5] / 1024)
         ]
 
     with open(csv_path, 'w') as csv:
@@ -69,9 +69,6 @@ def _raw_to_png(csv_data, png_path):
     dataframe['maxrss (Mb)'] = dataframe['ru_maxrss'] / 1e3
     dataframe.drop(list(dataframe.filter(regex='ru_')), axis=1, inplace=True)
     dataframe['latency_variance (ms) * 100'] = 100.0 * dataframe['latency_variance (ms)']
-    dataframe['data_received Mbits/s'] = dataframe['data_received'] / 1024
-    percentils_data_received = dataframe['data_received Mbits/s'].describe(percentiles=[0.95])
-    dataframe['data_received Mbits/s (95%)'] = percentils_data_received.iloc[5]
     dataframe[['T_experiment',
                'latency_min (ms)',
                'latency_max (ms)',
@@ -94,7 +91,7 @@ def _raw_to_png(csv_data, png_path):
     dataframe['data_received Mbits/s (P95)'] = percentils_data_received.iloc[5]
     dataframe[['T_experiment',  'data_received Mbits/s', 'data_received Mbits/s (P95)']].plot(x='T_experiment')
     plt.title('Performance ' + plot_name + ' tests throughtput @PERF_TEST_TOPIC@ \n@TEST_NAME@')
-    plt.ylim(0, 10000)
+    # plt.ylim(0, 10000)
     plt.savefig(png_path[:-4] + "_throughtput.png")
 
     dataframe[['T_experiment', 'cpu_usage (%)']].plot(x='T_experiment')
