@@ -37,6 +37,7 @@ def _raw_to_csv(csv_data, csv_path):
     appears on the plot.
     """
     dataframe = pd.read_csv(csv_data, skiprows=21, sep='[ \t]*,[ \t]*', engine='python')
+    dataframe = dataframe[2:]
     dataframe_agg = dataframe.agg(['max', 'mean', 'sum', 'median'])
 
     percentils_latency = dataframe['latency_mean (ms)'].describe(percentiles=[0.95])
@@ -87,7 +88,11 @@ def _raw_to_png(csv_data, png_path):
     plt.title('Performance ' + plot_name + ' tests latency\n@TEST_NAME@')
     plt.savefig(png_path)
 
-    dataframe[['T_experiment', 'data_received Mbits/s (95%)']].plot(x='T_experiment')
+    dataframe = dataframe[2:]
+    dataframe['data_received Mbits/s'] = dataframe['data_received']/ 1024
+    percentils_data_received = dataframe['data_received Mbits/s'].describe(percentiles=[0.95])
+    dataframe['data_received Mbits/s (P95)'] = percentils_data_received.iloc[5]
+    dataframe[['T_experiment',  'data_received Mbits/s', 'data_received Mbits/s (P95)']].plot(x='T_experiment')
     plt.title('Performance ' + plot_name + ' tests throughtput @PERF_TEST_TOPIC@ \n@TEST_NAME@')
     plt.ylim(0, 10000)
     plt.savefig(png_path[:-4] + "_throughtput.png")
