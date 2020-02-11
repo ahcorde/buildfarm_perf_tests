@@ -70,11 +70,12 @@ def _raw_to_png(csv_data, png_path):
     dataframe['latency_variance (ms) * 100'] = 100.0 * dataframe['latency_variance (ms)']
     dataframe['data_received Mbits/s'] = dataframe['data_received'] / 1024
     percentils_data_received = dataframe['data_received Mbits/s'].describe(percentiles=[0.95])
-    dataframe['data_received Mbits/s (95%)'] = dataframe['data_received Mbits/s']
+    dataframe['data_received Mbits/s (95%)'] = percentils_data_received
     dataframe[['T_experiment',
                'latency_min (ms)',
                'latency_max (ms)',
                'latency_mean (ms)',
+               'latency_p95 (ms)',
                'latency_variance (ms) * 100',
                'maxrss (Mb)']].plot(x='T_experiment', secondary_y=['maxrss (Mb)'])
 
