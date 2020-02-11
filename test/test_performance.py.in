@@ -53,9 +53,9 @@ def _raw_to_csv(csv_data, csv_path):
         str(dataframe_agg.loc['mean', 'cpu_usage (%)']),
         str(percentils_cpu_usage.iloc[5]),
         str(dataframe_agg.loc['median', 'cpu_usage (%)']),
-        str(dataframe_agg.loc['mean', 'data_received']),
-        str(dataframe_agg.loc['median', 'data_received']),
-        str(percentils_data_received.iloc[5])
+        str(dataframe_agg.loc['mean', 'data_received']) / 1024,
+        str(dataframe_agg.loc['median', 'data_received']) / 1024,
+        str(percentils_data_received.iloc[5]) / 1024
         ]
 
     with open(csv_path, 'w') as csv:
