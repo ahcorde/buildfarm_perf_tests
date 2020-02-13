@@ -91,87 +91,87 @@ function(add_performance_test TEST_NAME COMM RMW_IMPLEMENTATION)
       ${SKIP_TEST}
     )
   endforeach()
-
-  set(NODE_SPINNING_TIMEOUT "30")
-  get_filename_component(
-    PERFORMANCE_OVERHEAD_NODE_CSV
-    "${AMENT_TEST_RESULTS_DIR}/${PROJECT_NAME}/overhead_node_test_results_${TEST_NAME}.csv"
-    ABSOLUTE
-  )
-  get_filename_component(
-    PERFORMANCE_OVERHEAD_NODE_PNG
-    "${AMENT_TEST_RESULTS_DIR}/${PROJECT_NAME}/overhead_node_test_results_${TEST_NAME}.png"
-    ABSOLUTE
-  )
-
-  configure_file(
-    test_spinning.py.in
-    ${CMAKE_CURRENT_BINARY_DIR}/test_spinning_${TEST_NAME}.py.configure
-    @ONLY
-  )
-  file(GENERATE
-    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/test/test_spinning_${TEST_NAME}.py"
-    INPUT "${CMAKE_CURRENT_BINARY_DIR}/test_spinning_${TEST_NAME}.py.configure"
-  )
-
-  add_launch_test(
-    "${CMAKE_CURRENT_BINARY_DIR}/test/test_spinning_${TEST_NAME}.py"
-    TARGET test_spinning_${TEST_NAME}
-    ENV
-    "PERFORMANCE_OVERHEAD_NODE_CSV=${PERFORMANCE_OVERHEAD_NODE_CSV}"
-    "PERFORMANCE_OVERHEAD_NODE_PNG=${PERFORMANCE_OVERHEAD_NODE_PNG}"
-    "RMW_IMPLEMENTATION=${RMW_IMPLEMENTATION}"
-    TIMEOUT 120
-  )
-  set(PUBSUB_TIMEOUT "30")
-
-  get_available_rmw_implementations(_rmw_implementations)
-
-  foreach(rmw_impl ${_rmw_implementations})
-
-    # TODO (ahcorde): perf_test is not working with CycloneDDS or FastRTPS when
-    #  processes are splitted in two
-    set(SKIP_TEST "")
-    if(${COMM} STREQUAL "CycloneDDS" OR ${COMM} STREQUAL "FastRTPS")
-      set(SKIP_TEST "SKIP_TEST")
-    endif()
-
-    set(COMM_PUB ${RMW_IMPLEMENTATION})
-    set(COMM_SUB ${rmw_impl})
-    set(TEST_NAME_PUB_SUB ${RMW_IMPLEMENTATION}_${rmw_impl}_${COMM})
-
-    get_filename_component(
-      PERFORMANCE_OVERHEAD_CSV
-      "${AMENT_TEST_RESULTS_DIR}/${PROJECT_NAME}/overhead_test_results_${TEST_NAME_PUB_SUB}.csv"
-      ABSOLUTE
-    )
-    get_filename_component(
-      PERFORMANCE_OVERHEAD_PNG
-      "${AMENT_TEST_RESULTS_DIR}/${PROJECT_NAME}/overhead_test_results"
-      ABSOLUTE
-    )
-
-    configure_file(
-      test_pub_sub.py.in
-      ${CMAKE_CURRENT_BINARY_DIR}/test_pub_sub_${TEST_NAME_PUB_SUB}.py.configure
-      @ONLY
-    )
-    file(GENERATE
-      OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/test/test_pub_sub_${TEST_NAME_PUB_SUB}.py"
-      INPUT "${CMAKE_CURRENT_BINARY_DIR}/test_pub_sub_${TEST_NAME_PUB_SUB}.py.configure"
-    )
-
-    add_launch_test(
-      "${CMAKE_CURRENT_BINARY_DIR}/test/test_pub_sub_${TEST_NAME_PUB_SUB}.py"
-      TARGET test_pub_sub_${TEST_NAME_PUB_SUB}
-      ENV
-      "PERFORMANCE_OVERHEAD_CSV=${PERFORMANCE_OVERHEAD_CSV}"
-      "PERFORMANCE_OVERHEAD_PNG=${PERFORMANCE_OVERHEAD_PNG}"
-      "RMW_IMPLEMENTATION=${RMW_IMPLEMENTATION}"
-      TIMEOUT 120
-      ${SKIP_TEST}
-    )
-  endforeach()
+  #
+  # set(NODE_SPINNING_TIMEOUT "30")
+  # get_filename_component(
+  #   PERFORMANCE_OVERHEAD_NODE_CSV
+  #   "${AMENT_TEST_RESULTS_DIR}/${PROJECT_NAME}/overhead_node_test_results_${TEST_NAME}.csv"
+  #   ABSOLUTE
+  # )
+  # get_filename_component(
+  #   PERFORMANCE_OVERHEAD_NODE_PNG
+  #   "${AMENT_TEST_RESULTS_DIR}/${PROJECT_NAME}/overhead_node_test_results_${TEST_NAME}.png"
+  #   ABSOLUTE
+  # )
+  #
+  # configure_file(
+  #   test_spinning.py.in
+  #   ${CMAKE_CURRENT_BINARY_DIR}/test_spinning_${TEST_NAME}.py.configure
+  #   @ONLY
+  # )
+  # file(GENERATE
+  #   OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/test/test_spinning_${TEST_NAME}.py"
+  #   INPUT "${CMAKE_CURRENT_BINARY_DIR}/test_spinning_${TEST_NAME}.py.configure"
+  # )
+  #
+  # add_launch_test(
+  #   "${CMAKE_CURRENT_BINARY_DIR}/test/test_spinning_${TEST_NAME}.py"
+  #   TARGET test_spinning_${TEST_NAME}
+  #   ENV
+  #   "PERFORMANCE_OVERHEAD_NODE_CSV=${PERFORMANCE_OVERHEAD_NODE_CSV}"
+  #   "PERFORMANCE_OVERHEAD_NODE_PNG=${PERFORMANCE_OVERHEAD_NODE_PNG}"
+  #   "RMW_IMPLEMENTATION=${RMW_IMPLEMENTATION}"
+  #   TIMEOUT 120
+  # )
+  # set(PUBSUB_TIMEOUT "30")
+  #
+  # get_available_rmw_implementations(_rmw_implementations)
+  #
+  # foreach(rmw_impl ${_rmw_implementations})
+  #
+  #   # TODO (ahcorde): perf_test is not working with CycloneDDS or FastRTPS when
+  #   #  processes are splitted in two
+  #   set(SKIP_TEST "")
+  #   if(${COMM} STREQUAL "CycloneDDS" OR ${COMM} STREQUAL "FastRTPS")
+  #     set(SKIP_TEST "SKIP_TEST")
+  #   endif()
+  #
+  #   set(COMM_PUB ${RMW_IMPLEMENTATION})
+  #   set(COMM_SUB ${rmw_impl})
+  #   set(TEST_NAME_PUB_SUB ${RMW_IMPLEMENTATION}_${rmw_impl}_${COMM})
+  #
+  #   get_filename_component(
+  #     PERFORMANCE_OVERHEAD_CSV
+  #     "${AMENT_TEST_RESULTS_DIR}/${PROJECT_NAME}/overhead_test_results_${TEST_NAME_PUB_SUB}.csv"
+  #     ABSOLUTE
+  #   )
+  #   get_filename_component(
+  #     PERFORMANCE_OVERHEAD_PNG
+  #     "${AMENT_TEST_RESULTS_DIR}/${PROJECT_NAME}/overhead_test_results"
+  #     ABSOLUTE
+  #   )
+  #
+  #   configure_file(
+  #     test_pub_sub.py.in
+  #     ${CMAKE_CURRENT_BINARY_DIR}/test_pub_sub_${TEST_NAME_PUB_SUB}.py.configure
+  #     @ONLY
+  #   )
+  #   file(GENERATE
+  #     OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/test/test_pub_sub_${TEST_NAME_PUB_SUB}.py"
+  #     INPUT "${CMAKE_CURRENT_BINARY_DIR}/test_pub_sub_${TEST_NAME_PUB_SUB}.py.configure"
+  #   )
+  #
+  #   add_launch_test(
+  #     "${CMAKE_CURRENT_BINARY_DIR}/test/test_pub_sub_${TEST_NAME_PUB_SUB}.py"
+  #     TARGET test_pub_sub_${TEST_NAME_PUB_SUB}
+  #     ENV
+  #     "PERFORMANCE_OVERHEAD_CSV=${PERFORMANCE_OVERHEAD_CSV}"
+  #     "PERFORMANCE_OVERHEAD_PNG=${PERFORMANCE_OVERHEAD_PNG}"
+  #     "RMW_IMPLEMENTATION=${RMW_IMPLEMENTATION}"
+  #     TIMEOUT 120
+  #     ${SKIP_TEST}
+  #   )
+  # endforeach()
 endfunction()
 
 macro(try_add_performance_test)
