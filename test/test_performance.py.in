@@ -19,6 +19,9 @@ import pandas as pd
 
 plt.switch_backend('agg')
 
+BYTE_TO_MBYTE = 1 / (1024*1024)
+BYTE_TO_KBYTE = 1 / (1024)
+
 
 def _cleanUpLogs(performance_log_prefix):
     for log in glob(performance_log_prefix + '*'):
@@ -37,10 +40,12 @@ def _raw_to_csv(csv_data, csv_path):
     appears on the plot.
     """
     dataframe = pd.read_csv(csv_data, skiprows=21, sep='[ \t]*,[ \t]*', engine='python')
+    dataframe = dataframe[2:]
     dataframe_agg = dataframe.agg(['max', 'mean', 'sum', 'median'])
 
     percentils_latency = dataframe['latency_mean (ms)'].describe(percentiles=[0.95])
     percentils_cpu_usage = dataframe['cpu_usage (%)'].describe(percentiles=[0.95])
+    percentils_data_received = dataframe['data_received'].describe(percentiles=[0.95])
     values = [
         str(dataframe_agg.loc['mean', 'latency_mean (ms)']),
         str(dataframe_agg.loc['median', 'latency_mean (ms)']),
@@ -52,39 +57,56 @@ def _raw_to_csv(csv_data, csv_path):
         str(dataframe_agg.loc['mean', 'cpu_usage (%)']),
         str(percentils_cpu_usage.iloc[5]),
         str(dataframe_agg.loc['median', 'cpu_usage (%)']),
+        str(dataframe_agg.loc['mean', 'data_received'] *BYTE_TO_MBYTE),
+        str(dataframe_agg.loc['median', 'data_received'] * BYTE_TO_MBYTE),
+        str(percentils_data_received.iloc[5] * BYTE_TO_MBYTE)
         ]
 
     with open(csv_path, 'w') as csv:
-         csv.write(','.join(['@TEST_NAME@'] * len(values)) + '\n')
+         csv.write(','.join(['@TEST_NAME@_@PERF_TEST_TOPIC@'] * len(values)) + '\n')
          csv.write(','.join(values) + '\n')
 
 def _raw_to_png(csv_data, png_path):
     dataframe = pd.read_csv(csv_data, skiprows=21, sep='[ \t]*,[ \t]*', engine='python')
     pd.options.display.float_format = '{:.4f}'.format
-    dataframe['maxrss (Mb)'] = dataframe['ru_maxrss'] / 1e3
+    dataframe['maxrss (Mb)'] = dataframe['ru_maxrss'] * BYTE_TO_KBYTE
     dataframe.drop(list(dataframe.filter(regex='ru_')), axis=1, inplace=True)
     dataframe['latency_variance (ms) * 100'] = 100.0 * dataframe['latency_variance (ms)']
-    dataframe[['T_experiment',
+    percentils_latency = dataframe['latency_mean (ms)'].describe(percentiles=[0.95])
+    dataframe['latency_p95 (ms)'] = percentils_latency.iloc[5]
+    ax = dataframe[['T_experiment',
                'latency_min (ms)',
                'latency_max (ms)',
                'latency_mean (ms)',
+               'latency_p95 (ms)',
                'latency_variance (ms) * 100',
                'maxrss (Mb)']].plot(x='T_experiment', secondary_y=['maxrss (Mb)'])
 
-    plt.title('@TEST_NAME@ Performance Test')
+    plot_name = "One Process"
 
+    if '@NUMBER_PROCESS@' == 2:
+      plot_name = "Two Processes"
+
+    plt.title('Performance ' + plot_name + ' tests latency\n@TEST_NAME@ @PERF_TEST_TOPIC@')
+    ax.set_ylabel("ms")
     plt.savefig(png_path)
 
-    dataframe[['T_experiment', 'cpu_usage (%)']].plot(x='T_experiment')
+    dataframe['data_received Mbits/s'] = dataframe['data_received'] * BYTE_TO_MBYTE
+    percentils_data_received = dataframe['data_received Mbits/s'].describe(percentiles=[0.95])
+    dataframe['data_received Mbits/s (P95)'] = percentils_data_received.iloc[5]
+    ax = dataframe[['T_experiment',  'data_received Mbits/s', 'data_received Mbits/s (P95)']].plot(x='T_experiment')
+    plt.title('Performance ' + plot_name + ' Throughput (Mbits/s) Tests\n@TEST_NAME@ @PERF_TEST_TOPIC@')
+    ax.set_ylabel("Mbits/s")
+    plt.savefig(png_path[:-4] + "_throughput.png")
 
-    plt.title('@TEST_NAME@ CPU usage (%) Test')
-
+    ax = dataframe[['T_experiment', 'cpu_usage (%)']].plot(x='T_experiment')
+    plt.title('Performance ' + plot_name + ' tests CPU usage (%)\n@TEST_NAME@ @PERF_TEST_TOPIC@')
+    ax.set_ylabel("%")
     plt.savefig(png_path[:-4] + "_cpu_usage.png")
 
-    dataframe.plot(kind='bar', y=['received', 'sent', 'lost'])
-
-    plt.title('@TEST_NAME@  Received/Sent packets per second and Lost packets')
-
+    ax = dataframe.plot(kind='bar', y=['received', 'sent', 'lost'])
+    plt.title(plot_name + ' Received/Sent packets per second and Lost packets\n@TEST_NAME@ @PERF_TEST_TOPIC@')
+    ax.set_ylabel("Number of packets")
     plt.savefig(png_path[:-4] + "_histogram.png")
 
 
@@ -100,7 +122,7 @@ def generate_test_description(ready_fn):
         '-l', performance_log_prefix,
     ]
 
-    if '@NUMBER_PROCESS@' == 2:
+    if @NUMBER_PROCESS@ == 2:
         args.append('--roundtrip_mode')
         args.append('Main')
 
@@ -117,12 +139,7 @@ def generate_test_description(ready_fn):
 
     node_under_test = Node(
         package='performance_test', node_executable='perf_test', output='log',
-        arguments=[
-            '-c', '@COMM@',
-            '-t', '@PERF_TEST_TOPIC@',
-            '--max_runtime', '@PERF_TEST_MAX_RUNTIME@',
-            '-l', performance_log_prefix,
-        ]
+        arguments=args
     )
 
     launch_description.append(node_under_test)

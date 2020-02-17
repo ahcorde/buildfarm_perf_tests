@@ -55,4 +55,10 @@ if(BUILD_TESTING)
   add_subdirectory(test)
 endif()
 
+install(TARGETS
+  node_spinning
+  DESTINATION
+  lib/${PROJECT_NAME}
+)
+
 ament_package()

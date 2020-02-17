@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This package defines some tests which invoke `perf_test` from Apex.AI's [performance_test](https://gitlab.com/ApexAI/performance_test) package. This allows you to test performance and latency of several ROS 2 RMW implementations.
+This package defines some tests. On one hand it invokes `perf_test` from Apex.AI's [performance_test](https://gitlab.com/ApexAI/performance_test) package. This allows you to test performance and latency of several ROS 2 RMW implementations. On the other hand we are evaluating the additional overhead caused by a single pub/sub topic or one process spinning and detect potential leaks related to theses activities.
 
 * There is a test for each RMW:
 
@@ -13,6 +13,80 @@ This package defines some tests which invoke `perf_test` from Apex.AI's [perform
   - rmw_fastrtps_cpp
   - rmw_fastrtps_dynamic_cpp
   - rmw_opensplice_cpp
+
+### Test 1 - Performance Test  (Apex.AI)
+
+In this test we are running the Performance Test provided by Apex.AI. Right now we have [our own fork](https://github.com/ros2/performance_test) because there are some pending pull requests in the official gitlab repository.
+
+In this test we are measurement:
+ - Average round-trip time
+ - CPU usage (provided by Apex.AI tool)
+ - Sent/Received packets per second
+ - Total lost packets
+ - Max resident set size
+
+We are generating two plots per measurement
+ - [One per-build](http://build.ros2.org/view/Eci/job/Eci__nightly-performance_ubuntu_bionic_amd64/lastBuild/)
+ - [Other over time](http://build.ros2.org/view/Eci/job/Eci__nightly-performance_ubuntu_bionic_amd64/plot/)
+
+**The test only measures the latency between the same RMW implementation**
+
+| Publisher/Subscriber     | rmw_fastrtps_cpp         | rmw_opensplice_cpp       | rmw_cyclonedds_cpp       | rmw_fastrtps_dynamic_cpp | rmw_connext_cpp          |
+|--------------------------|--------------------------|--------------------------|--------------------------|--------------------------|--------------------------|
+| rmw_fastrtps_cpp         | :heavy_check_mark:       | :heavy_multiplication_x: | :heavy_multiplication_x: | :heavy_multiplication_x: | :heavy_multiplication_x: |
+| rmw_opensplice_cpp       | :heavy_multiplication_x: | :heavy_check_mark:       | :heavy_multiplication_x: | :heavy_multiplication_x: | :heavy_multiplication_x: |
+| rmw_cyclonedds_cpp       | :heavy_multiplication_x: | :heavy_multiplication_x: | :heavy_check_mark:       | :heavy_multiplication_x: | :heavy_multiplication_x: |
+| rmw_fastrtps_dynamic_cpp | :heavy_multiplication_x: | :heavy_multiplication_x: | :heavy_multiplication_x: | :heavy_check_mark:       | :heavy_multiplication_x: |
+| rmw_connext_cpp          | :heavy_multiplication_x: | :heavy_multiplication_x: | :heavy_multiplication_x: | :heavy_multiplication_x: | :heavy_check_mark:       |
+
+## Test 2 - Simple pub/sub
+
+In this case we are testing one publisher and one subscriber **in different processes** sending a 1kArray at 5Hz. This will allow us to evaluate additional overhead caused by a single pub/sub topic and detect leaks related to this activity.
+
+We measure for both publisher and subscriber:
+
+ - Average round trip
+ - CPU usage ( readed from the filesystem )
+ - Total lost packets
+ - Received/Sent packets per second
+ - Physical memory
+ - Resident anonymous memory
+ - Virtual memory
+
+Again we plot measurement:
+ - [One per-build](http://3.83.10.11/job/Dci__nightly-performance-overhead-multi_ubuntu_bionic_amd64/lastBuild/)
+ - [Other over time](http://3.83.10.11/job/Dci__nightly-performance-overhead-multi_ubuntu_bionic_amd64/plot/)
+
+| Publisher/Subscriber     | rmw_fastrtps_cpp   | rmw_opensplice_cpp | rmw_cyclonedds_cpp | rmw_fastrtps_dynamic_cpp | rmw_connext_cpp    |
+|--------------------------|--------------------|--------------------|--------------------|--------------------------|--------------------|
+| rmw_fastrtps_cpp         | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark:       | :heavy_check_mark: |
+| rmw_opensplice_cpp       | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark:       | :heavy_check_mark: |
+| rmw_cyclonedds_cpp       | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark:       | :heavy_check_mark: |
+| rmw_fastrtps_dynamic_cpp | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark:       | :heavy_check_mark: |
+| rmw_connext_cpp          | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark:       | :heavy_check_mark: |
+
+## Test 3 - Node spinning
+
+This test creates one process and spins for 1 minute to evaluate ROS 2 overhead and detect obvious leaks.
+
+We measure:
+
+ - CPU usage ( readed from file system )
+ - Physical memory
+ - Resident anonymous memory
+ - Virtual memory
+
+Again we plot measurement:
+ - [One per-build](http://3.83.10.11/job/Dci__nightly-performance-overhead_ubuntu_bionic_amd64/lastBuild/)
+ - [Other over time](http://3.83.10.11/job/Dci__nightly-performance-overhead_ubuntu_bionic_amd64/plot/Node%20Spinnig%20Results/)
+
+| DDS                      | Process 1 |
+|--------------------------|-----------|
+| rmw_fastrtps_cpp         | :heavy_check_mark:   |
+| rmw_opensplice_cpp       |  :heavy_check_mark:   |
+| rmw_cyclonedds_cpp       | :heavy_check_mark:   |
+| rmw_fastrtps_dynamic_cpp |  :heavy_check_mark:   |
+| rmw_connext_cpp          |   :heavy_check_mark:   |
 
 ##  Build
 
@@ -38,6 +112,8 @@ colcon test --packages-select buildfarm_perf_tests -DPERF_TEST_MAX_RUNTIME="30" 
 Add at the end the flags `--event-handlers console_direct+` if you want to visualize all the output.
 
 ## Details
+
+  ***Note: the graphs presented here are for demonstration purposes only. The data in the graphs are not meant to be accurate or current.***
 
 * Each test runs for **30** seconds with a **1k payload**, but this can be changed using CMake variables.
  - `PERF_TEST_MAX_RUNTIME`: Maximum number of seconds to run before  exiting. Zero runs forever.
@@ -81,30 +157,20 @@ Options:
   -h [ --help ]           Help screen
   --timeout arg (=60)     Test duration
   --log arg (=out.csv)    Log filename
-  --process_name arg      process_name
-  --process_arguments arg process_arguments
+  --process_pid arg      process pid
 ```
 
 A general overview of what a typical run might do, for example:
 
 1. Start process under test. For example `perf_test`
-2. Launch `system_metrics_collector` using the argument  `--process_name` with the name of the process (in this case `perf_test`). You can also use the argument `--process_argument` to include one of the arguments of the `perf_test`, For example if you are running `perf_test` with `--roundtrip_mode` you can include in this option `Main` or `Relay` to identify each one of the processes.
+2. Launch `system_metrics_collector` using the argument `--process_pid` with the pid of the process (in this case `perf_test`).
 3. Finally `system_metrics_collector` will fetch the data from the files describe above. If you have include the option `--log` then the data it's recorded in the file otherwise the standard output will show the reading.
 
 ### Examples
 
-Example 1:
-
 ```bash
-ros2 run performance_test perf_test -c FastRTPS -t Array1k
-ros2 run buildfarm_perf_tests system_metric_collector --process_name perf_test
-```
-
-Example 2:
-
-```bash
-ros2 run performance_test perf_test -c FastRTPS -t Array1k --roundtrip_mode Relay
-ros2 run performance_test perf_test -c FastRTPS -t Array1k --roundtrip_mode Main
-ros2 run buildfarm_perf_tests system_metric_collector --process_name perf_test --process_argument Main
-ros2 run buildfarm_perf_tests system_metric_collector --process_name perf_test --process_argument Relay
+ros2 run performance_test perf_test -c ROS2 -t Array1k &
+ps -e | grep perf_test
+  8621 pts/5    00:00:01 perf_test
+ros2 run buildfarm_perf_tests system_metric_collector -process_pid 8621
 ```
