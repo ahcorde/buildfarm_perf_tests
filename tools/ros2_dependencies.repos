@@ -5,5 +5,5 @@ repositories:
     version: ahcorde/test/v3
   performance_test:
     type: git
-    url: https://github.com/ros2/performance_test.git
-    version: run_on_buildfarm
+    url: https://github.com/ahcorde/performance_test.git
+    version: ahcorde/fix/disable_async
