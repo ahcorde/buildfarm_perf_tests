@@ -12,6 +12,7 @@ from launch import LaunchDescription
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 import launch_testing
+import ament_index_python
 
 import matplotlib  # noqa: F401
 import matplotlib.pyplot as plt
@@ -152,28 +153,46 @@ def generate_test_description(ready_fn):
           package='performance_test', node_executable='perf_test', output='log',
           arguments=args_relay,
         )
-        launch_description.append(node_relay)
 
     node_under_test = Node(
         package='performance_test', node_executable='perf_test', output='log',
         arguments=args,
-        # sigkill_timeout=LaunchConfiguration('sigkill_timeout', default=@PERF_TEST_MAX_RUNTIME@)
     )
 
     if @NUMBER_PROCESS@ == 2:
-      launch_description.append(launch.actions.ExecuteProcess(
-                                cmd=["sleep", "@PERF_TEST_MAX_RUNTIME@", "&&",
-                                "kill", "-9", launch.substitutions.EnvironmentVariable('PROCESS_UNDER_TEST_ID')]))
+      timeout = @PERF_TEST_MAX_RUNTIME@ + 2
+      relay_killer = launch.actions.ExecuteProcess(
+                                  cmd=[os.path.join(
+                                      ament_index_python.get_package_prefix('buildfarm_perf_tests'),
+                                      'lib/buildfarm_perf_tests',
+                                      'kill_relay.bash',
+                                      ),
+                                      str(timeout),
+                                      launch.substitutions.EnvironmentVariable('PROCESS_UNDER_TEST_ID')
+                                      ],
+                                    name="kill_relay")
       launch_description.append(launch.actions.RegisterEventHandler(launch.event_handlers.OnProcessStart(
-                                target_action=node_relay,
-                                on_start=lambda p, c: on_process_start(p, c, node_under_test))))
-    else:
-      launch_description.append(node_under_test)
+                                target_action=node_under_test,
+                                on_start=lambda p, c: on_process_start(p, c, relay_killer))))
+      launch_description.append(node_relay)
 
+    launch_description.append(node_under_test)
     launch_description.append(launch_testing.util.KeepAliveProc())
     launch_description.append(launch.actions.OpaqueFunction(function=lambda context: ready_fn()))
 
     return LaunchDescription(launch_description), locals()
+    # return LaunchDescription(
+    #   [
+    #   launch.actions.RegisterEventHandler(launch.event_handlers.OnProcessStart(
+    #                             target_action=node_under_test,
+    #                             on_start=lambda p, c: on_process_start(p, c, relay_killer))),
+    #   node_relay,
+    #   node_under_test,
+    #   launch.actions.OpaqueFunction(function=lambda context: ready_fn()),
+    #   launch_testing.util.KeepAliveProc(),
+    #   ]
+    #
+    #   ), locals()
 
 
 class PerformanceTestTermination(unittest.TestCase):
