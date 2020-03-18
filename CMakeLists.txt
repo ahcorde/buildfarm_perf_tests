@@ -42,8 +42,8 @@ target_link_libraries(system_metric_collector
 )
 
 install(TARGETS
-  system_metric_collector
   node_spinning
+  system_metric_collector
   DESTINATION
   lib/${PROJECT_NAME}
 )
@@ -54,11 +54,5 @@ if(BUILD_TESTING)
 
   add_subdirectory(test)
 endif()
-
-install(TARGETS
-  node_spinning
-  DESTINATION
-  lib/${PROJECT_NAME}
-)
 
 ament_package()

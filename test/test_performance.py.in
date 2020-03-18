@@ -39,8 +39,7 @@ def _raw_to_csv(csv_data, csv_path):
     Changing the column names here will change the name of the line that
     appears on the plot.
     """
-    dataframe = pd.read_csv(csv_data, skiprows=21, sep='[ \t]*,[ \t]*', engine='python')
-    dataframe = dataframe[2:]
+    dataframe = pd.read_csv(csv_data, skiprows=22, sep='[ \t]*,[ \t]*', engine='python')
     dataframe_agg = dataframe.agg(['max', 'mean', 'sum', 'median'])
 
     percentils_latency = dataframe['latency_mean (ms)'].describe(percentiles=[0.95])
@@ -67,7 +66,7 @@ def _raw_to_csv(csv_data, csv_path):
          csv.write(','.join(values) + '\n')
 
 def _raw_to_png(csv_data, png_path):
-    dataframe = pd.read_csv(csv_data, skiprows=21, sep='[ \t]*,[ \t]*', engine='python')
+    dataframe = pd.read_csv(csv_data, skiprows=22, sep='[ \t]*,[ \t]*', engine='python')
     pd.options.display.float_format = '{:.4f}'.format
     dataframe['maxrss (Mb)'] = dataframe['ru_maxrss'] * BYTE_TO_KBYTE
     dataframe.drop(list(dataframe.filter(regex='ru_')), axis=1, inplace=True)
@@ -119,8 +118,13 @@ def generate_test_description(ready_fn):
         '-c', '@COMM@',
         '-t', '@PERF_TEST_TOPIC@',
         '--max_runtime', '@PERF_TEST_MAX_RUNTIME@',
+        "--ignore", "3",
         '-l', performance_log_prefix,
     ]
+
+    sync_env = {}
+    if '@SYNC_MODE@' == 'sync' and '@COMM@' != 'ROS2':
+      args.append('--disable_async')
 
     if @NUMBER_PROCESS@ == 2:
         args.append('--roundtrip_mode')
@@ -133,13 +137,13 @@ def generate_test_description(ready_fn):
               '-t', '@PERF_TEST_TOPIC@',
               '--max_runtime', '@PERF_TEST_MAX_RUNTIME@',
               "--roundtrip_mode", "Relay",
-          ]
+          ],
         )
         launch_description.append(node_relay)
 
     node_under_test = Node(
         package='performance_test', node_executable='perf_test', output='log',
-        arguments=args
+        arguments=args,
     )
 
     launch_description.append(node_under_test)
