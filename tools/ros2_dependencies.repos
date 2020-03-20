@@ -5,5 +5,5 @@ repositories:
     version: ahcorde/test/v3_dashing
   performance_test:
     type: git
-    url: https://github.com/ros2/performance_test.git
+    url: https://github.com/ahcorde/performance_test.git
     version: run_on_buildfarm_dashing
